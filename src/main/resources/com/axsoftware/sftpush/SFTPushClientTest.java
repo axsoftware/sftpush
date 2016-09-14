@@ -10,6 +10,6 @@ public class SFTPushClientTest {
 	
 	@Test
 	public void upload(){
-		final SFTPushClient client = new SFTPushClient(new PushConfig("gabriela", "sftp.conductor.com.br", "/calsystem/sftp/processadora/gabriela2.ppk"));
+		final SFTPushClient client = new SFTPushClient(new PushConfig("user", "sftp.host.com", "path_file.ppk"));
 	}
 }
