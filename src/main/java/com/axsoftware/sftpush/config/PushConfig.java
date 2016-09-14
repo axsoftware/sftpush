@@ -1,6 +1,6 @@
 package com.axsoftware.sftpush.config;
 
-public class SFTPushConfig {
+public class PushConfig {
 
 	private String host;
 
@@ -14,7 +14,7 @@ public class SFTPushConfig {
 
 	private Integer connectTimeout;
 
-	public SFTPushConfig(String username, String host, String password, String ppk, Integer port) {
+	public PushConfig(String username, String host, String password, String ppk, Integer port) {
 		this.username = username;
 		this.host = host;
 		this.password = password;
@@ -22,15 +22,15 @@ public class SFTPushConfig {
 		this.port = port;
 	}
 
-	public SFTPushConfig(String username, String host, String password, String ppk) {
+	public PushConfig(String username, String host, String password, String ppk) {
 		this(username, host, password, ppk, 22);
 	}
 
-	public SFTPushConfig(String username, String host, String ppk) {
+	public PushConfig(String username, String host, String ppk) {
 		this(username, host, null, ppk, 22);
 	}
 
-	public SFTPushConfig(String host, Integer port, String username, String password) {
+	public PushConfig(String host, Integer port, String username, String password) {
 		this(username, host, password, null, 21);
 	}
 	
