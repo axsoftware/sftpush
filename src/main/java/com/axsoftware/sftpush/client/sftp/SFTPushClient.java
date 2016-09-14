@@ -46,7 +46,7 @@ public class SFTPushClient {
 		}
 
 		final Properties config = new Properties();
-		config.put(STRICT_HOST_KEY_CHECKING, IntegradorParametroService.FTP_STRICT_HOST_KEY);
+		config.put(STRICT_HOST_KEY_CHECKING, "no");
 		session.setConfig(config);
 
 		return session;
@@ -54,17 +54,13 @@ public class SFTPushClient {
 	}
 
 	private Channel getChannel(final Session session, final CHANNEL_TYPE channelType) throws JSchException {
-
-		Channel channel = session.openChannel(channelType.toString());
-
-		return channel;
-
+		return session.openChannel(channelType.toString());
 	}
 
 	private String formatPath(String path) {
 
 		if (path == null) {
-			throw new IllegalArgumentException("Path invalido: " + path);
+			throw new IllegalArgumentException("Invalid Path: " + path);
 		}
 
 		if (path.endsWith("/") || path.endsWith("\\")) {
@@ -72,20 +68,15 @@ public class SFTPushClient {
 		}
 
 		return path + "/";
-
 	}
 
 	/**
 	 * Transfere todos os arquivos do diretorio remoto para o diretorio local.
 	 * 
-	 * @param remoteDir
-	 *            Caminho do diretorio remoto.
-	 * @param localDir
-	 *            Caminho do diretorio local.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
+	 * @param remoteDir Caminho do diretorio remoto.
+	 * @param localDir Caminho do diretorio local.
+	 * @throws JSchException Erro ao estabelecer sessao FTP.
+	 * @throws SftpException Erro na conexao segura FTP (SFTP).
 	 */
 	public void doTransferAllFiles(String remoteDir, String localDir) throws JSchException, SftpException {
 
@@ -123,7 +114,7 @@ public class SFTPushClient {
 
 		} catch (SftpException e) {
 
-			logger.
+			logger.throwing(sourceClass, sourceMethod, e);
 
 		} finally {
 
@@ -134,58 +125,36 @@ public class SFTPushClient {
 
 	}
 
-	/**
-	 * Transfere arquivo do diretorio remoto para o diretorio local.
-	 * 
-	 * @param remoteDir
-	 *            Caminho do diretorio remoto.
-	 * @param remoteFileName
-	 *            Nome do arquivo remoto.
-	 * @param localDir
-	 *            Caminho do diretorio local.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
-	 */
 	public void doTransferFile(String remoteDir, String remoteFileName, String localDir) throws JSchException, SftpException {
-
 		doTransferFile(remoteDir, remoteFileName, localDir, remoteFileName);
-
 	}
 
 	/**
-	 * Transfere arquivo do diretorio remoto para o diretorio local.
+	 * Get file from remote directory to local folder
 	 * 
-	 * @param remoteDir
-	 *            Caminho do diretorio remoto.
-	 * @param remoteFileName
-	 *            Nome do arquivo remoto.
-	 * @param localDir
-	 *            Caminho do diretorio local.
-	 * @param localFileName
-	 *            Nome do arquivo local.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
+	 * @param remoteDir - Path remote dir
+	 * @param remoteFileName - Remote filename
+	 * @param localDir - Path local folder
+	 * @param localFileName - Local filename
+	 * @throws JSchException - Error connect FTP
+	 * @throws SftpException - Error connect SFTP
 	 */
 	public void doTransferFile(String remoteDir, String remoteFileName, String localDir, String localFileName) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
-			throw new IllegalArgumentException("Caminho remoto invalido: " + remoteDir);
+			throw new IllegalArgumentException("Invalid remote path: " + remoteDir);
 		}
 
 		if (localDir == null || localDir.isEmpty()) {
-			throw new IllegalArgumentException("Caminho local invalido: " + localDir);
+			throw new IllegalArgumentException("Invalid local folder: " + localDir);
 		}
 
 		if (remoteFileName == null || remoteFileName.isEmpty()) {
-			throw new IllegalArgumentException("Nome do arquivo remoto invalido: " + remoteFileName);
+			throw new IllegalArgumentException("Invalid remote filename: " + remoteFileName);
 		}
 
 		if (localFileName == null || localFileName.isEmpty()) {
-			throw new IllegalArgumentException("Nome do arquivo local invalido: " + localFileName);
+			throw new IllegalArgumentException("Invalid local filename: " + localFileName);
 		}
 
 		remoteDir = formatPath(remoteDir);
@@ -198,11 +167,8 @@ public class SFTPushClient {
 		channel.connect();
 
 		ChannelSftp sftpChannel = (ChannelSftp) channel;
-
 		try {
-
 			sftpChannel.get(remoteDir + remoteFileName, localDir + localFileName);
-
 		} catch (SftpException e) {
 
 			logger.error("Erro ao realizar SFTP.", e);
@@ -210,24 +176,18 @@ public class SFTPushClient {
 			throw e;
 
 		} finally {
-
 			sftpChannel.exit();
 			session.disconnect();
-
 		}
-
 	}
 
 	/**
-	 * Lista todos os arquivos do diretorio remoto.
+	 * List all remote files .
 	 * 
-	 * @param remotePath
-	 *            Caminho do diretorio remoto.
-	 * @return Nome do arquivos remotos.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
+	 * @param remotePath - Path remote dir.
+	 * @return Return list filenames.
+	 * @throws JSchException Error connect session SFTP.
+	 * @throws SftpException Error execute command SFTP.
 	 */
 	public List<String> doListFiles(String remotePath) throws JSchException, SftpException {
 
@@ -262,52 +222,38 @@ public class SFTPushClient {
 			}
 
 		} catch (SftpException e) {
-
 			logger.error("Erro ao realizar SFTP.", e);
-
 			throw e;
-
 		} finally {
-
 			sftpChannel.exit();
 			session.disconnect();
-
 		}
-
 		return filesNames;
-
 	}
 
 	/**
-	 * Tranfere os arquivos remotos para o diretorio local, utilizando a mesma
-	 * sessao FTP.
+	 * Transfer remote files to local folder
 	 * 
-	 * Ao realizar a tranferencia por nome com diversos arquivos este metodo tem
-	 * melhor performance, uma vez que a sessao e criada apenas uma vez.
+	 * Use this method when needs increase performance   
 	 * 
-	 * @param remotePath
-	 *            Caminho do diretorio remoto.
-	 * @param localDir
-	 *            Caminho do diretorio local.
-	 * @param remoteFileNames
-	 *            Nomes dos arquivos remotos.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
+	 * @param remotePath Path remote directory.
+	 * @param localDir Path local dir.
+	 * @param remoteFileNames Remote filenames.
+	 * @throws JSchException Error connect session SFTP.
+	 * @throws SftpException Error execute command SFTP.
 	 */
 	public void doTransferFileList(String remoteDir, String localDir, String... remoteFileNames) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
-			throw new IllegalArgumentException("Caminho remoto invalido: " + remoteDir);
+			throw new IllegalArgumentException("Invalid remote folder: " + remoteDir);
 		}
 
 		if (localDir == null || localDir.isEmpty()) {
-			throw new IllegalArgumentException("Caminho local invalido: " + localDir);
+			throw new IllegalArgumentException("Invalid local folder: " + localDir);
 		}
 
 		if (remoteFileNames == null || remoteFileNames.length == 0) {
-			throw new IllegalArgumentException("Nome de arquivos remotos invalido: " + remoteFileNames);
+			throw new IllegalArgumentException("Invalid name of remote files: " + remoteFileNames);
 		}
 
 		remoteDir = formatPath(remoteDir);
@@ -337,40 +283,28 @@ public class SFTPushClient {
 					}
 
 					throw e;
-
 				}
-
 			}
 
 		} catch (SftpException e) {
-
 			logger.error("Erro ao realizar SFTP.", e);
-
 			throw e;
-
 		} finally {
-
 			sftpChannel.exit();
 			session.disconnect();
-
 		}
 
 	}
 
 	/**
-	 * Tranfere os arquivos locais para o diretorio remoto, utilizando a mesma
-	 * sessao FTP.
+	 * Send local files to remote folder
 	 * 
-	 * @param remotePath
-	 *            Caminho do diretorio remoto.
-	 * @param localDir
-	 *            Caminho do diretorio local.
-	 * @param localFileNames
-	 *            Nomes dos arquivos remotos.
-	 * @throws JSchException
-	 *             Erro ao estabelecer sessao FTP.
-	 * @throws SftpException
-	 *             Erro na conexao segura FTP (SFTP).
+	 * 
+	 * @param remotePath Path remote folder.
+	 * @param localDir Path local folder.
+	 * @param localFileNames List name remote files.
+	 * @throws JSchException Error connect session SFTP.
+	 * @throws SftpException Error execute command SFTP.
 	 */
 	public void doPutFileList(String localDir, String remoteDir, String... localFileNames) throws JSchException, SftpException {
 
@@ -436,5 +370,4 @@ public class SFTPushClient {
 	public void setConnection(SFTPushConfig connection) {
 		this.connection = connection;
 	}
-
 }
