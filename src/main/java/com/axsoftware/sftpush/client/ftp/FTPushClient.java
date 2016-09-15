@@ -46,11 +46,11 @@ public final class FTPushClient {
 	public void changeDirectory(String directory) throws SFTPushException {
 		if(directory != null && !directory.trim().isEmpty()){
 			try {
-				if (directory.startsWith("/")) {
-					getFtpClient().changeWorkingDirectory("/");
+				if (directory.startsWith(File.separator)) {
+					getFtpClient().changeWorkingDirectory(File.separator);
 				}
 				
-				for (String dir : directory.split("/")) {
+				for (String dir : directory.split(File.separator)) {
 					getFtpClient().changeWorkingDirectory(dir);
 				}
 			} catch (Exception e) {
