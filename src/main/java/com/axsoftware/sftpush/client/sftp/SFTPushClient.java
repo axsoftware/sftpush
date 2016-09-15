@@ -1,5 +1,6 @@
 package com.axsoftware.sftpush.client.sftp;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -30,6 +31,10 @@ public class SFTPushClient {
 		exec, sftp, shell
 	};
 
+	public static void main(String[] args) {
+		System.out.println(File.separator);
+	}
+	
 	public SFTPushClient(PushConfig connection) {
 		this.connection = connection;
 	}
@@ -63,10 +68,7 @@ public class SFTPushClient {
 		if (path == null) {
 			throw new IllegalArgumentException("Invalid Path: " + path);
 		}
-		if (path.endsWith("/") || path.endsWith("\\")) {
-			return path;
-		}
-		return path + "/";
+		return path.endsWith(File.separator) ? path : path + File.separator; 
 	}
 
 	/**

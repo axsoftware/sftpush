@@ -17,6 +17,7 @@ import com.axsoftware.sftpush.exception.SFTPushException;
 
 public final class FTPushClient {
 
+	private static final String DOT = ".";
 	private static final String ERROR_CHANGE_FOLDER 	= "Error on select folder %s. ( %s )";
 	private static final String ERROR_CONNECT_FTP 		= "Error on connect FTP %s.( %s )";
 	private static final String ERROR_REMOVE_FILE 		= "Error on remove file.( %s )";
@@ -30,6 +31,7 @@ public final class FTPushClient {
 	private PushConfig ftpConfig;
 
 	public FTPushClient() {
+		
 	}
 
 	public FTPushClient(PushConfig ftpConfig) {
@@ -131,7 +133,7 @@ public final class FTPushClient {
 	 * @throws SFTPushException
 	 */
 	public void delete(String fileName) throws SFTPushException {
-		this.delete(fileName, ".");
+		this.delete(fileName, DOT);
 	}
 
 	/**
@@ -279,10 +281,8 @@ public final class FTPushClient {
 	 * @throws SFTPushException
 	 */
 	public void upload(File file, String fileName, String directory) throws SFTPushException {
-		FileInputStream content = null;
-
 		try {
-			content = new FileInputStream(file);
+			final FileInputStream content = new FileInputStream(file);
 			this.upload(content, fileName, directory);
 		} catch (Exception e) {
 			throw new SFTPushException(String.format(FTPushClient.ERROR_UPLOAD_FILE, e.getMessage()));
@@ -352,9 +352,8 @@ public final class FTPushClient {
 	 * @throws SFTPushException
 	 */
 	public static File download(PushConfig config, String directory, String filename) throws SFTPushException {
-		FTPushClient ftp = new FTPushClient(config);
+		final FTPushClient ftp = new FTPushClient(config);
 		ftp.connect();
-
 		try {
 			return ftp.download(filename, directory);
 		} finally {
