@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Logger;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -17,6 +18,8 @@ import com.axsoftware.sftpush.exception.SFTPushException;
 
 public final class FTPushClient {
 
+	private static final Logger logger = Logger.getLogger(FTPushClient.class.getName()); 
+	
 	private static final String DOT = ".";
 	private static final String ERROR_CHANGE_FOLDER 	= "Error on select folder %s. ( %s )";
 	private static final String ERROR_CONNECT_FTP 		= "Error on connect FTP %s.( %s )";
@@ -34,7 +37,7 @@ public final class FTPushClient {
 		
 	}
 
-	public FTPushClient(PushConfig ftpConfig) {
+	public FTPushClient(final PushConfig ftpConfig) {
 		this.ftpConfig = ftpConfig;
 	}
 
@@ -43,14 +46,16 @@ public final class FTPushClient {
 	 * 
 	 * @throws SFTPushException
 	 */
-	public void changeDirectory(String directory) throws SFTPushException {
-		if(directory != null && !directory.trim().isEmpty()){
+	public void changeDirectory(final String directory) throws SFTPushException {
+		
+		if(directory != null){
+			logger.info(String.format("Using directory %s", directory));
 			try {
 				if (directory.startsWith(File.separator)) {
 					getFtpClient().changeWorkingDirectory(File.separator);
 				}
 				
-				for (String dir : directory.split(File.separator)) {
+				for (final String dir : directory.split(File.separator)) {
 					getFtpClient().changeWorkingDirectory(dir);
 				}
 			} catch (Exception e) {
@@ -87,7 +92,7 @@ public final class FTPushClient {
 	 * 
 	 * @throws SFTPushException
 	 */
-	public void connect(String address, String username, String password) throws SFTPushException {
+	public void connect(final String address, final String username, final String password) throws SFTPushException {
 		this.connect(address, null, username, password);
 	}
 
@@ -96,7 +101,9 @@ public final class FTPushClient {
 	 * 
 	 * @throws SFTPushException
 	 */
-	public void connect(String host, Integer port, String username, String password) throws SFTPushException {
+	public void connect(final String host, final Integer port, final String username, final String password) throws SFTPushException {
+		
+		logger.info(String.format("Connect FTO usign params > host: %s - port: %s - username: %s - password: %s", host,port,username,password));
 		
 		ftpClient = new FTPClient();
 		ftpClient.setConnectTimeout(5000);
@@ -142,6 +149,8 @@ public final class FTPushClient {
 	 * @throws SFTPushException
 	 */
 	public void delete(String fileName, String directory) throws SFTPushException {
+		
+		logger.info(String.format("Delete file filename: %s in directory %s", fileName, directory));
 		changeDirectory(directory);
 		try {
 			getFtpClient().deleteFile(fileName);
@@ -170,6 +179,7 @@ public final class FTPushClient {
 		}
 	}
 
+	
 	/**
 	 * Download the file and put in OutputStream 
 	 * 
@@ -178,6 +188,7 @@ public final class FTPushClient {
 	public void download(FTPFile file, OutputStream output) throws SFTPushException {
 		this.download(file.getName(), null, output);
 	}
+	
 
 	/**
 	 * Download the file and put in OutputStream
@@ -195,6 +206,7 @@ public final class FTPushClient {
 	 */
 	public void download(String fileName, String directory, OutputStream output) throws SFTPushException {
 		
+		logger.info(String.format("Download file filename: %s in directory %s", fileName, directory));
 		changeDirectory(directory);
 
 		if (!fileExists(fileName, null)) {
@@ -255,6 +267,7 @@ public final class FTPushClient {
 	public void quit() throws SFTPushException {
 		try {
 			if (getFtpClient() != null) {
+				logger.info("Quit connection");
 				getFtpClient().quit();
 			}
 		} catch (Exception e) {
@@ -320,6 +333,7 @@ public final class FTPushClient {
 
 	public void upload(InputStream content, String fileName, String directory, Integer fileTransferMode, Integer fileType, boolean passiveMode) throws IOException, SFTPushException {
 
+		logger.info(String.format("Upload file params: fileName:%s, directory:%s, fileTransferMode:%s, fileType:%s, passiveMode:%s", fileName, directory, fileTransferMode, fileType, passiveMode));
 		changeDirectory(directory);
 
 		final FTPClient ftpClient = getFtpClient();
@@ -386,5 +400,4 @@ public final class FTPushClient {
 	public PushConfig getFtpConfig() {
 		return ftpConfig;
 	}
-
 }
