@@ -14,7 +14,7 @@ public class PushConfig {
 
 	private Integer connectTimeout;
 
-	public PushConfig(String username, String host, String password, String ppk, Integer port) {
+	public PushConfig(String host, String username, String password, String ppk, Integer port) {
 		this.username = username;
 		this.host = host;
 		this.password = password;
@@ -22,16 +22,16 @@ public class PushConfig {
 		this.port = port;
 	}
 
-	public PushConfig(String username, String host, String password, String ppk) {
-		this(username, host, password, ppk, 22);
+	public PushConfig(String host, String username, String password, String ppk) {
+		this(host, username, password, ppk, 22);
 	}
 
-	public PushConfig(String username, String host, String ppk) {
-		this(username, host, null, ppk, 22);
+	public PushConfig(String host, String username, String ppk) {
+		this(host, username,  null, ppk, 22);
 	}
 
-	public PushConfig(String host, Integer port, String username, String password) {
-		this(username, host, password, null, 21);
+	public PushConfig(String host, String username, String password, Integer port) {
+		this(host, username, password, null, port);
 	}
 	
 	public String getHost() {
