@@ -49,6 +49,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- SHHD Mina -->
+		<dependency>
+			<groupId>org.apache.sshd</groupId>
+			<artifactId>sshd-core</artifactId>
+			<version>1.1.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
