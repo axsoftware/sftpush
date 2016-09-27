@@ -1,19 +1,14 @@
 package com.axsoftware.sftpush.client.sftp;
 
+import com.axsoftware.sftpush.config.PushConfig;
+import com.jcraft.jsch.*;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
-
-import com.axsoftware.sftpush.config.PushConfig;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 
 public class SFTPushClient {
 
@@ -25,17 +20,19 @@ public class SFTPushClient {
 
 	private static final String STRICT_HOST_KEY_CHECKING = "StrictHostKeyChecking";
 
+	private static final String HOST_KEY_ALGORITHMS = "HostKeyAlgorithms";
+
 	private PushConfig connection;
 
 	private enum CHANNEL_TYPE {
 		exec, sftp, shell
 	};
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		System.out.println(File.separator);
 	}
-	
-	public SFTPushClient(PushConfig connection) {
+
+	public SFTPushClient(final PushConfig connection) {
 		this.connection = connection;
 	}
 
@@ -43,18 +40,19 @@ public class SFTPushClient {
 
 		final JSch jsch = new JSch();
 
-		if (connection.getPpk() != null) {
-			jsch.addIdentity(connection.getPpk());
+		if (this.connection.getPpk() != null) {
+			jsch.addIdentity(this.connection.getPpk());
 		}
 
-		final Session session = jsch.getSession(connection.getUsername(), connection.getHost(), connection.getPort());
+		final Session session = jsch.getSession(this.connection.getUsername(), this.connection.getHost(), this.connection.getPort());
 
-		if (connection.getPassword() != null) {
-			session.setPassword(connection.getPassword());
+		if (this.connection.getPassword() != null) {
+			session.setPassword(this.connection.getPassword());
 		}
 
 		final Properties config = new Properties();
 		config.put(STRICT_HOST_KEY_CHECKING, "no");
+		config.put(HOST_KEY_ALGORITHMS, "+ssh-dss");
 		session.setConfig(config);
 
 		return session;
@@ -64,7 +62,7 @@ public class SFTPushClient {
 		return session.openChannel(channelType.toString());
 	}
 
-	private String formatPath(String path) {
+	private String formatPath(final String path) {
 		if (path == null) {
 			throw new IllegalArgumentException("Invalid Path: " + path);
 		}
@@ -98,28 +96,28 @@ public class SFTPushClient {
 		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
 		channel.connect();
 
-		ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = (ChannelSftp) channel;
 
 		try {
 
 			final Vector<ChannelSftp.LsEntry> list = sftpChannel.ls(formatDir);
-			for (ChannelSftp.LsEntry listEntry : list) {
+			for (final ChannelSftp.LsEntry listEntry : list) {
 
 				if (!listEntry.getAttrs().isDir()) {
 					sftpChannel.get(formatDir + listEntry.getFilename(), formatLocalDir + listEntry.getFilename());
 				}
 			}
 
-		} catch (SftpException e) {
+		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
-			logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 		} finally {
 			sftpChannel.exit();
 			session.disconnect();
 		}
 	}
 
-	public void sendFile(String remoteDir, String remoteFileName, String localDir) throws JSchException, SftpException {
+	public void sendFile(final String remoteDir, final String remoteFileName, final String localDir) throws JSchException, SftpException {
 		sendFile(remoteDir, remoteFileName, localDir, remoteFileName);
 	}
 
@@ -133,7 +131,7 @@ public class SFTPushClient {
 	 * @throws JSchException - Error connect FTP
 	 * @throws SftpException - Error connect SFTP
 	 */
-	public void sendFile(String remoteDir, String remoteFileName, String localDir, String localFileName) throws JSchException, SftpException {
+	public void sendFile(String remoteDir, final String remoteFileName, String localDir, final String localFileName) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote path: " + remoteDir);
@@ -160,12 +158,12 @@ public class SFTPushClient {
 		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
 		channel.connect();
 
-		ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = (ChannelSftp) channel;
 		try {
 			sftpChannel.get(remoteDir + remoteFileName, localDir + localFileName);
-		} catch (SftpException e) {
+		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
-			logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);			
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 			throw e;
 		} finally {
 			sftpChannel.exit();
@@ -195,15 +193,15 @@ public class SFTPushClient {
 		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
 		channel.connect();
 
-		ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = (ChannelSftp) channel;
 
-		List<String> filesNames = new ArrayList<>();
+		final List<String> filesNames = new ArrayList<>();
 
 		try {
 
-			Vector<ChannelSftp.LsEntry> list = sftpChannel.ls(remotePath);
+			final Vector<ChannelSftp.LsEntry> list = sftpChannel.ls(remotePath);
 
-			for (ChannelSftp.LsEntry listEntry : list) {
+			for (final ChannelSftp.LsEntry listEntry : list) {
 
 				if (!listEntry.getAttrs().isDir()) {
 					filesNames.add(listEntry.getFilename());
@@ -211,9 +209,9 @@ public class SFTPushClient {
 
 			}
 
-		} catch (SftpException e) {
+		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
-			logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);		
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 			throw e;
 		} finally {
 			sftpChannel.exit();
@@ -226,14 +224,14 @@ public class SFTPushClient {
 	 * Transfer remote files to local folder
 	 * 
 	 * Use this method when needs increase performance   
-	 * 
-	 * @param remotePath Path remote directory.
+	 *
+	 * @param remoteDir Path remote directory.
 	 * @param localDir Path local dir.
 	 * @param remoteFileNames Remote filenames.
 	 * @throws JSchException Error connect session SFTP.
 	 * @throws SftpException Error execute command SFTP.
 	 */
-	public void doTransferFileList(String remoteDir, String localDir, String... remoteFileNames) throws JSchException, SftpException {
+	public void doTransferFileList(String remoteDir, String localDir, final String... remoteFileNames) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote folder: " + remoteDir);
@@ -256,21 +254,21 @@ public class SFTPushClient {
 		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
 		channel.connect();
 
-		ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = (ChannelSftp) channel;
 
 		try {
 
-			for (String remoteFileName : remoteFileNames) {
+			for (final String remoteFileName : remoteFileNames) {
 
 				try {
 
 					sftpChannel.get(remoteDir + remoteFileName, localDir + remoteFileName);
 
-				} catch (SftpException e) {
+				} catch (final SftpException e) {
 
 					if (e.id == 2) { 
 //						TODO SFP - Refactor 
-						logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, remoteFileName));								
+						this.logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, remoteFileName));
 						continue;
 					}
 
@@ -278,7 +276,7 @@ public class SFTPushClient {
 				}
 			}
 
-		} catch (SftpException e) {
+		} catch (final SftpException e) {
 			// 2: No such file
 			throw e;
 		} finally {
@@ -290,14 +288,14 @@ public class SFTPushClient {
 
 	/**
 	 * Send local files to remote folder
-	 * 
-	 * @param remotePath Path remote folder.
+	 *
+	 * @param localDir Path remote folder.
 	 * @param localDir Path local folder.
 	 * @param localFileNames List name remote files.
 	 * @throws JSchException Error connect session SFTP.
 	 * @throws SftpException Error execute command SFTP.
 	 */
-	public void putFileList(String localDir, String remoteDir, String... localFileNames) throws JSchException, SftpException {
+	public void putFileList(String localDir, String remoteDir, final String... localFileNames) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote folder: " + remoteDir);
@@ -323,25 +321,25 @@ public class SFTPushClient {
 		final ChannelSftp sftpChannel = (ChannelSftp) channel;
 		try {
 
-			for (String localFileName : localFileNames) {
+			for (final String localFileName : localFileNames) {
 
 				try {
 
 					sftpChannel.put(localDir + localFileName, remoteDir + localFileName);
 
-				} catch (SftpException e) {
+				} catch (final SftpException e) {
 					if (e.id == 2) {
 //						TODO SFP - Refactor 
-						logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, localFileName));		
+						this.logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, localFileName));
 						continue;
 					}
 					throw e;
 				}
 			}
 
-		} catch (SftpException e) {
+		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
-			logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);		
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 			throw e;
 		} finally {
 			sftpChannel.exit();
@@ -350,7 +348,7 @@ public class SFTPushClient {
 
 	}
 
-	public void setConnection(PushConfig connection) {
+	public void setConnection(final PushConfig connection) {
 		this.connection = connection;
 	}
 }
