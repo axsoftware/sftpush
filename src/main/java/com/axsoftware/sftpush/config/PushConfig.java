@@ -14,7 +14,7 @@ public class PushConfig {
 
 	private Integer connectTimeout;
 
-	public PushConfig(String host, String username, String password, String ppk, Integer port) {
+	public PushConfig(final String host, final String username, final String password, final String ppk, final Integer port) {
 		this.username = username;
 		this.host = host;
 		this.password = password;
@@ -22,63 +22,63 @@ public class PushConfig {
 		this.port = port;
 	}
 
-	public PushConfig(String host, String username, String password, String ppk) {
+	public PushConfig(final String host, final String username, final String password, final String ppk) {
 		this(host, username, password, ppk, 22);
 	}
 
-	public PushConfig(String host, String username, String ppk) {
+	public PushConfig(final String host, final String username, final String ppk) {
 		this(host, username,  null, ppk, 22);
 	}
 
-	public PushConfig(String host, String username, String password, Integer port) {
+	public PushConfig(final String host, final String username, final String password, final Integer port) {
 		this(host, username, password, null, port);
 	}
 	
 	public String getHost() {
-		return host;
+		return this.host;
 	}
 
-	public void setHost(String host) {
+	public void setHost(final String host) {
 		this.host = host;
 	}
 
 	public String getUsername() {
-		return username;
+		return this.username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(final String username) {
 		this.username = username;
 	}
 
 	public String getPassword() {
-		return password;
+		return this.password;
 	}
 
-	public void setPassword(String password) {
+	public void setPassword(final String password) {
 		this.password = password;
 	}
 
 	public String getPpk() {
-		return ppk;
+		return this.ppk;
 	}
 
-	public void setPpk(String ppk) {
+	public void setPpk(final String ppk) {
 		this.ppk = ppk;
 	}
 
 	public Integer getPort() {
-		return port;
+		return this.port;
 	}
 
-	public void setPort(Integer port) {
+	public void setPort(final Integer port) {
 		this.port = port;
 	}
 
 	public Integer getConnectTimeout() {
-		return connectTimeout;
+		return this.connectTimeout;
 	}
 
-	public void setConnectTimeout(Integer connectTimeout) {
+	public void setConnectTimeout(final Integer connectTimeout) {
 		this.connectTimeout = connectTimeout;
 	}
 

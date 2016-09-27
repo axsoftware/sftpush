@@ -224,8 +224,8 @@ public class SFTPushClient {
 	 * Transfer remote files to local folder
 	 * 
 	 * Use this method when needs increase performance   
-	 * 
-	 * @param remotePath Path remote directory.
+	 *
+	 * @param remoteDir Path remote directory.
 	 * @param localDir Path local dir.
 	 * @param remoteFileNames Remote filenames.
 	 * @throws JSchException Error connect session SFTP.
@@ -288,8 +288,8 @@ public class SFTPushClient {
 
 	/**
 	 * Send local files to remote folder
-	 * 
-	 * @param remotePath Path remote folder.
+	 *
+	 * @param localDir Path remote folder.
 	 * @param localDir Path local folder.
 	 * @param localFileNames List name remote files.
 	 * @throws JSchException Error connect session SFTP.
