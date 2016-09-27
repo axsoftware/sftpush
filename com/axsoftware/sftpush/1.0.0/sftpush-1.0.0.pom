@@ -18,31 +18,45 @@
 	</distributionManagement>
 
 	<dependencies>
-		
+
 		<!-- SFTP -->
 		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jsch</artifactId>
 			<version>0.1.54</version>
 		</dependency>
-		
+
 		<!-- FTP -->
 		<dependency>
 			<groupId>commons-net</groupId>
 			<artifactId>commons-net</artifactId>
 			<version>3.5</version>
-		</dependency>		
-		
+		</dependency>
+
+		<!-- MockFtpServer -->
+		<dependency>
+			<groupId>org.mockftpserver</groupId>
+			<artifactId>MockFtpServer</artifactId>
+			<version>2.6</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- JUnit -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
-		</dependency>		
-		
+		</dependency>
+
+		<!-- SHHD Mina -->
+		<dependency>
+			<groupId>org.apache.sshd</groupId>
+			<artifactId>sshd-core</artifactId>
+			<version>1.1.1</version>
+		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 
@@ -62,7 +76,8 @@
 					<repositoryOwner>axsoftware</repositoryOwner>    <!-- github username -->
 				</configuration>
 				<executions>
-					<!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
+					<!-- run site-maven-plugin's 'site' target as part of the build's normal 
+						'deploy' phase -->
 					<execution>
 						<goals>
 							<goal>site</goal>
@@ -92,6 +107,6 @@
 			</plugin>
 
 		</plugins>
-	</build>	
+	</build>
 
 </project>
