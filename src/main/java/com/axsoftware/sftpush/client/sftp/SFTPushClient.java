@@ -4,6 +4,8 @@ import com.axsoftware.sftpush.config.PushConfig;
 import com.jcraft.jsch.*;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -26,7 +28,7 @@ public class SFTPushClient {
 
 	private enum CHANNEL_TYPE {
 		exec, sftp, shell
-	};
+	}
 
 	public static void main(final String[] args) {
 		System.out.println(File.separator);
@@ -119,6 +121,39 @@ public class SFTPushClient {
 
 	public void sendFile(final String remoteDir, final String remoteFileName, final String localDir) throws JSchException, SftpException {
 		sendFile(remoteDir, remoteFileName, localDir, remoteFileName);
+	}
+
+	/**
+	 * Collects a input stream and create a remote file.
+	 *
+	 * @param fileStream Input file contents
+	 * @param remotePath Ouput file on remote server
+	 */
+	public void sendFile(final InputStream fileStream, final Path remotePath) throws JSchException, SftpException {
+		if (fileStream == null) {
+			throw new IllegalArgumentException("Input stream must be valid");
+		}
+
+		if (remotePath == null || remotePath.toString().isEmpty()) {
+			throw new IllegalArgumentException("Remote path must be valid");
+		}
+
+		final Session session = getSession();
+		session.connect();
+
+		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
+		channel.connect();
+
+		final ChannelSftp sftpChannel = (ChannelSftp) channel;
+		try {
+			sftpChannel.put(fileStream, remotePath.toString());
+		} catch (final SftpException e) {
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
+			throw e;
+		} finally {
+			sftpChannel.exit();
+			session.disconnect();
+		}
 	}
 
 	/**
