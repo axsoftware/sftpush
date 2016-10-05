@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.axsoftware</groupId>
 	<artifactId>sftpush</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 
 	<properties>
 		<github.global.server>github</github.global.server>
@@ -49,6 +49,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- SHHD Mina -->
+		<dependency>
+			<groupId>org.apache.sshd</groupId>
+			<artifactId>sshd-core</artifactId>
+			<version>1.1.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
