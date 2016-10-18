@@ -1,8 +1,5 @@
 package com.axsoftware.sftpush.client.sftp;
 
-import com.axsoftware.sftpush.config.PushConfig;
-import com.jcraft.jsch.*;
-
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -11,6 +8,14 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
+
+import com.axsoftware.sftpush.config.PushConfig;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 public class SFTPushClient {
 
@@ -26,19 +31,29 @@ public class SFTPushClient {
 
 	private PushConfig connection;
 
+	private Session sftpSession;
+	
 	private enum CHANNEL_TYPE {
 		exec, sftp, shell
-	}
-
-	public static void main(final String[] args) {
-		System.out.println(File.separator);
 	}
 
 	public SFTPushClient(final PushConfig connection) {
 		this.connection = connection;
 	}
 
-	private Session getSession() throws JSchException {
+	/**
+	 * Get current SFTP Session
+	 * @return
+	 * @throws JSchException
+	 */
+	public Session getSession() throws JSchException {
+		if(sftpSession == null || !sftpSession.isConnected()){
+			return getSFTPession();
+		}
+		return sftpSession;
+	}
+	
+	private Session getSFTPession() throws JSchException {
 
 		final JSch jsch = new JSch();
 
@@ -72,6 +87,29 @@ public class SFTPushClient {
 	}
 
 	/**
+	 * Get SFTP Channel
+	 * 
+	 * @return
+	 * @throws JSchException
+	 */
+	private ChannelSftp getChannelSftp() throws JSchException{
+		sftpSession = getSession();
+		sftpSession.connect();
+		final Channel channel = getChannel(sftpSession, CHANNEL_TYPE.sftp);
+		channel.connect();
+		return (ChannelSftp) channel;
+	}
+	
+	/**
+	 * Disconnect SFTP
+	 */
+	private void disconnectSession(){
+		if(sftpSession != null){
+			sftpSession.disconnect();
+		}
+	}
+	
+	/**
 	 * Pull all remote files to local folder
 	 * 
 	 * @param remoteDir Path remote folder.
@@ -92,30 +130,21 @@ public class SFTPushClient {
 		final String formatDir = formatPath(remoteDir);
 		final String formatLocalDir = formatPath(localDir);
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
-
+		final ChannelSftp sftpChannel = getChannelSftp();
 		try {
-
+			@SuppressWarnings("unchecked")
 			final Vector<ChannelSftp.LsEntry> list = sftpChannel.ls(formatDir);
 			for (final ChannelSftp.LsEntry listEntry : list) {
-
 				if (!listEntry.getAttrs().isDir()) {
 					sftpChannel.get(formatDir + listEntry.getFilename(), formatLocalDir + listEntry.getFilename());
 				}
 			}
-
 		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
 			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
 	}
 
@@ -138,13 +167,7 @@ public class SFTPushClient {
 			throw new IllegalArgumentException("Remote path must be valid");
 		}
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = getChannelSftp();
 		try {
 			sftpChannel.put(fileStream, remotePath.toString());
 		} catch (final SftpException e) {
@@ -152,7 +175,7 @@ public class SFTPushClient {
 			throw e;
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
 	}
 
@@ -187,13 +210,7 @@ public class SFTPushClient {
 		remoteDir = formatPath(remoteDir);
 		localDir = formatPath(localDir);
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = getChannelSftp();
 		try {
 			sftpChannel.get(remoteDir + remoteFileName, localDir + localFileName);
 		} catch (final SftpException e) {
@@ -202,7 +219,7 @@ public class SFTPushClient {
 			throw e;
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
 	}
 
@@ -222,35 +239,23 @@ public class SFTPushClient {
 
 		remotePath = formatPath(remotePath);
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
-
+		final ChannelSftp sftpChannel = getChannelSftp();
 		final List<String> filesNames = new ArrayList<>();
-
 		try {
-
+			@SuppressWarnings("unchecked")
 			final Vector<ChannelSftp.LsEntry> list = sftpChannel.ls(remotePath);
-
 			for (final ChannelSftp.LsEntry listEntry : list) {
-
 				if (!listEntry.getAttrs().isDir()) {
 					filesNames.add(listEntry.getFilename());
 				}
-
 			}
-
 		} catch (final SftpException e) {
 //			TODO SFP - Refactor 
 			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
 			throw e;
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
 		return filesNames;
 	}
@@ -283,30 +288,17 @@ public class SFTPushClient {
 		remoteDir = formatPath(remoteDir);
 		localDir = formatPath(localDir);
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
-
+		final ChannelSftp sftpChannel = getChannelSftp();
 		try {
-
 			for (final String remoteFileName : remoteFileNames) {
-
 				try {
-
 					sftpChannel.get(remoteDir + remoteFileName, localDir + remoteFileName);
-
 				} catch (final SftpException e) {
-
 					if (e.id == 2) { 
 //						TODO SFP - Refactor 
 						this.logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, remoteFileName));
 						continue;
 					}
-
 					throw e;
 				}
 			}
@@ -316,7 +308,7 @@ public class SFTPushClient {
 			throw e;
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
 
 	}
@@ -347,21 +339,11 @@ public class SFTPushClient {
 		remoteDir = formatPath(remoteDir);
 		localDir = formatPath(localDir);
 
-		final Session session = getSession();
-		session.connect();
-
-		final Channel channel = getChannel(session, CHANNEL_TYPE.sftp);
-		channel.connect();
-
-		final ChannelSftp sftpChannel = (ChannelSftp) channel;
+		final ChannelSftp sftpChannel = getChannelSftp();
 		try {
-
 			for (final String localFileName : localFileNames) {
-
 				try {
-
 					sftpChannel.put(localDir + localFileName, remoteDir + localFileName);
-
 				} catch (final SftpException e) {
 					if (e.id == 2) {
 //						TODO SFP - Refactor 
@@ -378,9 +360,8 @@ public class SFTPushClient {
 			throw e;
 		} finally {
 			sftpChannel.exit();
-			session.disconnect();
+			disconnectSession();
 		}
-
 	}
 
 	public void setConnection(final PushConfig connection) {
