@@ -55,6 +55,8 @@ public class FTPushClientTest {
 
 		final InputStream fileStream = new FileInputStream(path.toFile());
 		this.ftpClient.upload(fileStream, "test.tmp", null, FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE, false);
+
+		Files.delete(path);
 	}
 
 	@After
