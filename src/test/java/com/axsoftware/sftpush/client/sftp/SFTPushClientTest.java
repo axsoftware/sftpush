@@ -13,7 +13,8 @@ import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
 import org.junit.*;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 
 /**
@@ -34,12 +36,17 @@ public class SFTPushClientTest {
 	/**
 	 * File test name
 	 */
-	private static final String FILE_NAME = "source_sftp_client_file_test";
+	private static final String SRC_FILE_NAME = "source_sftp_client_file_test";
+
+	/**
+	 * File target name
+	 */
+	private static final String TARGET_FILE_NAME = "target_sftp_client_file_test";
 
 	/**
 	 * Server mount point
 	 */
-	private static final Path HOME_DIR = Paths.get(System.getProperty("java.io.tmpdir"));
+	private static final Path HOME_DIR = Paths.get("target", "sftp-test");
 
 	/**
 	 * Server address
@@ -69,7 +76,17 @@ public class SFTPushClientTest {
 	/**
 	 * Test file
 	 */
-	private static final Path FILE_PATH = Paths.get(HOME_DIR.toString(), FILE_NAME);
+	private static final Path SRC_FILE_PATH = Paths.get(HOME_DIR.toString(), SRC_FILE_NAME);
+
+	/**
+	 * Target test file
+	 */
+	private static final Path TARGET_FILE_PATH = Paths.get(HOME_DIR.toString(), TARGET_FILE_NAME);
+
+	/**
+	 * File contents
+	 */
+	private static final String FILE_CONTENTS = "foobar";
 
 	/**
 	 * SFTP Push client handle
@@ -84,6 +101,10 @@ public class SFTPushClientTest {
 	@BeforeClass
 	public static void suiteSetUp() throws IOException {
 		initServer();
+		if (!Files.exists(HOME_DIR)) {
+			Files.createDirectory(HOME_DIR);
+		}
+		Files.write(SRC_FILE_PATH, FILE_CONTENTS.getBytes());
 	}
 
 	/**
@@ -93,9 +114,8 @@ public class SFTPushClientTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		final Path outputFile = Paths.get(HOME_DIR.toString(), FILE_NAME);
-		if (Files.exists(outputFile)) {
-			Files.delete(outputFile);
+		if (Files.exists(TARGET_FILE_PATH)) {
+			Files.delete(TARGET_FILE_PATH);
 		}
 		initClient();
 	}
@@ -112,31 +132,35 @@ public class SFTPushClientTest {
 	public void uploadFile() throws JSchException, SftpException, InterruptedException, IOException {
 
 		Assume.assumeTrue(isUnix());
+		assertFalse(Files.exists(TARGET_FILE_PATH));
 
-		Files.write(FILE_PATH, "foobar".getBytes());
+		this.sftPushClient.uploadFile(SRC_FILE_PATH.toFile(), TARGET_FILE_PATH);
 
-		this.sftPushClient.sendFile(FILE_PATH.getParent().toString(), FILE_PATH.getFileName().toString(), FILE_PATH.getParent().toString(), FILE_PATH.getFileName().toString());
-
-		assertTrue(Files.exists(FILE_PATH));
+		assertTrue(Files.exists(TARGET_FILE_PATH));
 	}
 
 	@Test
-	public void uploadStream() throws SftpException, JSchException {
+	public void uploadStream() throws SftpException, JSchException, FileNotFoundException {
 
 		Assume.assumeTrue(isUnix());
 
-		final InputStream stream = new ByteArrayInputStream("foobar".getBytes());
+		final InputStream stream = new FileInputStream(SRC_FILE_PATH.toFile());
+		assertFalse(Files.exists(TARGET_FILE_PATH));
 
-		this.sftPushClient.sendFile(stream, FILE_PATH);
+		this.sftPushClient.uploadFile(stream, TARGET_FILE_PATH);
 
-		assertTrue(Files.exists(FILE_PATH));
+		assertTrue(Files.exists(TARGET_FILE_PATH));
 	}
 
 	@Test
-	public void downloadFile() {
+	public void downloadFile() throws IOException, SftpException, JSchException {
+
 		Assume.assumeTrue(isUnix());
+		assertFalse(Files.exists(TARGET_FILE_PATH));
 
+		this.sftPushClient.downloadFile(SRC_FILE_PATH, TARGET_FILE_PATH);
 
+		assertTrue(Files.exists(TARGET_FILE_PATH));
 	}
 
 	/**
@@ -147,6 +171,7 @@ public class SFTPushClientTest {
 	@AfterClass
 	public static void suiteTearDown() throws IOException {
 		SSHSERVER.stop();
+		Files.delete(SRC_FILE_PATH);
 	}
 
 	private static boolean isUnix() {

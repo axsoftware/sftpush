@@ -1,6 +1,11 @@
 package com.axsoftware.sftpush.client.sftp;
 
+import com.axsoftware.sftpush.config.PushConfig;
+import com.jcraft.jsch.*;
+
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -9,18 +14,10 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Logger;
 
-import com.axsoftware.sftpush.config.PushConfig;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
-
 public class SFTPushClient {
 
 	private final Logger logger = Logger.getLogger(SFTPushClient.class.getName());
-	
+
 	private static final String EXCEPTION_NO_SUCH_FILE = "NO SUCH FILE: %s";
 
 	private static final String EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP = "Error execute command SFTP";
@@ -32,7 +29,7 @@ public class SFTPushClient {
 	private PushConfig connection;
 
 	private Session sftpSession;
-	
+
 	private enum CHANNEL_TYPE {
 		exec, sftp, shell
 	}
@@ -43,16 +40,17 @@ public class SFTPushClient {
 
 	/**
 	 * Get current SFTP Session
+	 *
 	 * @return
 	 * @throws JSchException
 	 */
 	public Session getSession() throws JSchException {
-		if(sftpSession == null || !sftpSession.isConnected()){
+		if (this.sftpSession == null || !this.sftpSession.isConnected()) {
 			return getSFTPession();
 		}
-		return sftpSession;
+		return this.sftpSession;
 	}
-	
+
 	private Session getSFTPession() throws JSchException {
 
 		final JSch jsch = new JSch();
@@ -83,41 +81,41 @@ public class SFTPushClient {
 		if (path == null) {
 			throw new IllegalArgumentException("Invalid Path: " + path);
 		}
-		return path.endsWith(File.separator) ? path : path + File.separator; 
+		return path.endsWith(File.separator) ? path : path + File.separator;
 	}
 
 	/**
 	 * Get SFTP Channel
-	 * 
+	 *
 	 * @return
 	 * @throws JSchException
 	 */
-	private ChannelSftp getChannelSftp() throws JSchException{
-		sftpSession = getSession();
-		sftpSession.connect();
-		final Channel channel = getChannel(sftpSession, CHANNEL_TYPE.sftp);
+	private ChannelSftp getChannelSftp() throws JSchException {
+		this.sftpSession = getSession();
+		this.sftpSession.connect();
+		final Channel channel = getChannel(this.sftpSession, CHANNEL_TYPE.sftp);
 		channel.connect();
 		return (ChannelSftp) channel;
 	}
-	
+
 	/**
 	 * Disconnect SFTP
 	 */
-	private void disconnectSession(){
-		if(sftpSession != null){
-			sftpSession.disconnect();
+	private void disconnectSession() {
+		if (this.sftpSession != null) {
+			this.sftpSession.disconnect();
 		}
 	}
-	
+
 	/**
 	 * Pull all remote files to local folder
-	 * 
+	 *
 	 * @param remoteDir Path remote folder.
-	 * @param localDir Path local folder.
+	 * @param localDir  Path local folder.
 	 * @throws JSchException Error connect SFTP.
 	 * @throws SftpException Error send command SFTP.
 	 */
-	public void sendAllFiles(final String remoteDir, final String localDir) throws JSchException {
+	public void downloadAllFiles(final String remoteDir, final String localDir) throws JSchException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote path: " + remoteDir);
@@ -148,17 +146,13 @@ public class SFTPushClient {
 		}
 	}
 
-	public void sendFile(final String remoteDir, final String remoteFileName, final String localDir) throws JSchException, SftpException {
-		sendFile(remoteDir, remoteFileName, localDir, remoteFileName);
-	}
-
 	/**
 	 * Collects a input stream and create a remote file.
 	 *
 	 * @param fileStream Input file contents
 	 * @param remotePath Ouput file on remote server
 	 */
-	public void sendFile(final InputStream fileStream, final Path remotePath) throws JSchException, SftpException {
+	public void uploadFile(final InputStream fileStream, final Path remotePath) throws JSchException, SftpException {
 		if (fileStream == null) {
 			throw new IllegalArgumentException("Input stream must be valid");
 		}
@@ -180,16 +174,29 @@ public class SFTPushClient {
 	}
 
 	/**
+	 * Send a local file to remote FTP server
+	 *
+	 * @param file       File to be sent
+	 * @param remotePath absolute path on server
+	 * @throws JSchException
+	 * @throws SftpException
+	 * @throws FileNotFoundException
+	 */
+	public void uploadFile(final File file, final Path remotePath) throws JSchException, SftpException, FileNotFoundException {
+		uploadFile(new FileInputStream(file), remotePath);
+	}
+
+	/**
 	 * Get file from remote directory to local folder
-	 * 
-	 * @param remoteDir - Path remote dir
+	 *
+	 * @param remoteDir      - Path remote dir
 	 * @param remoteFileName - Remote filename
-	 * @param localDir - Path local folder
-	 * @param localFileName - Local filename
+	 * @param localDir       - Path local folder
+	 * @param localFileName  - Local filename
 	 * @throws JSchException - Error connect FTP
 	 * @throws SftpException - Error connect SFTP
 	 */
-	public void sendFile(String remoteDir, final String remoteFileName, String localDir, final String localFileName) throws JSchException, SftpException {
+	public void downloadFile(String remoteDir, final String remoteFileName, String localDir, final String localFileName) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote path: " + remoteDir);
@@ -224,14 +231,27 @@ public class SFTPushClient {
 	}
 
 	/**
+	 * Download file from SFTP server
+	 *
+	 * @param source Source path to be downloaded
+	 * @param target Target path to be stored
+	 * @throws JSchException
+	 * @throws SftpException
+	 */
+	public void downloadFile(final Path source, final Path target) throws JSchException, SftpException {
+		downloadFile(source.getParent().toString(), source.getFileName().toString(), target.getParent().toString(), target.getFileName().toString());
+
+	}
+
+	/**
 	 * List all remote files .
-	 * 
+	 *
 	 * @param remotePath - Path remote dir.
 	 * @return Return list filenames.
 	 * @throws JSchException Error connect session SFTP.
 	 * @throws SftpException Error execute command SFTP.
 	 */
-	public List<String> listFiles(String remotePath) throws JSchException, SftpException {
+	public List<String> listRemoteFiles(String remotePath) throws JSchException, SftpException {
 
 		if (remotePath == null || remotePath.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote path: " + remotePath);
@@ -262,16 +282,16 @@ public class SFTPushClient {
 
 	/**
 	 * Transfer remote files to local folder
-	 * 
-	 * Use this method when needs increase performance   
+	 * <p>
+	 * Use this method when needs increase performance
 	 *
-	 * @param remoteDir Path remote directory.
-	 * @param localDir Path local dir.
+	 * @param remoteDir       Path remote directory.
+	 * @param localDir        Path local dir.
 	 * @param remoteFileNames Remote filenames.
 	 * @throws JSchException Error connect session SFTP.
 	 * @throws SftpException Error execute command SFTP.
 	 */
-	public void doTransferFileList(String remoteDir, String localDir, final String... remoteFileNames) throws JSchException, SftpException {
+	public void downloadFileList(String remoteDir, String localDir, final String... remoteFileNames) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote folder: " + remoteDir);
@@ -294,7 +314,7 @@ public class SFTPushClient {
 				try {
 					sftpChannel.get(remoteDir + remoteFileName, localDir + remoteFileName);
 				} catch (final SftpException e) {
-					if (e.id == 2) { 
+					if (e.id == 2) {
 //						TODO SFP - Refactor 
 						this.logger.severe(String.format(EXCEPTION_NO_SUCH_FILE, remoteFileName));
 						continue;
@@ -316,13 +336,13 @@ public class SFTPushClient {
 	/**
 	 * Send local files to remote folder
 	 *
-	 * @param localDir Path remote folder.
-	 * @param localDir Path local folder.
+	 * @param localDir       Path remote folder.
+	 * @param localDir       Path local folder.
 	 * @param localFileNames List name remote files.
 	 * @throws JSchException Error connect session SFTP.
 	 * @throws SftpException Error execute command SFTP.
 	 */
-	public void putFileList(String localDir, String remoteDir, final String... localFileNames) throws JSchException, SftpException {
+	public void uploadFileList(String localDir, String remoteDir, final String... localFileNames) throws JSchException, SftpException {
 
 		if (remoteDir == null || remoteDir.isEmpty()) {
 			throw new IllegalArgumentException("Invalid remote folder: " + remoteDir);
