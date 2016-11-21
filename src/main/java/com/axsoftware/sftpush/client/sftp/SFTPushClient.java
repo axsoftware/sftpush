@@ -384,6 +384,19 @@ public class SFTPushClient {
 		}
 	}
 
+	/**
+	 * Create a new directory in remote server
+	 * @param directoryPath Directory name
+	 */
+	public void createRemoteDirectory(final String directoryPath) throws JSchException, SftpException {
+		if (directoryPath == null || directoryPath.isEmpty()) {
+			throw new IllegalArgumentException("Invalid remote folder: " + directoryPath);
+		}
+
+		final ChannelSftp sftpChannel = getChannelSftp();
+		sftpChannel.mkdir(directoryPath);
+	}
+
 	public void setConnection(final PushConfig connection) {
 		this.connection = connection;
 	}
