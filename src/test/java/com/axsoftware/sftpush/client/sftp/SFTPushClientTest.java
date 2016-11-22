@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
@@ -84,6 +85,11 @@ public class SFTPushClientTest {
 	private static final Path TARGET_FILE_PATH = Paths.get(HOME_DIR.toString(), TARGET_FILE_NAME);
 
 	/**
+	 * Target test directory
+	 */
+	private static final Path TARGET_DIR_PATH = Paths.get(HOME_DIR.toString(), "couse");
+
+	/**
 	 * File contents
 	 */
 	private static final String FILE_CONTENTS = "foobar";
@@ -116,6 +122,13 @@ public class SFTPushClientTest {
 	public void setUp() throws Exception {
 		if (Files.exists(TARGET_FILE_PATH)) {
 			Files.delete(TARGET_FILE_PATH);
+		}
+		if (Files.exists(TARGET_DIR_PATH)) {
+			final List<Path> files = Files.list(TARGET_DIR_PATH).collect(toList());
+			for (final Path file : files) {
+				Files.delete(file);
+			}
+			Files.delete(TARGET_DIR_PATH);
 		}
 		initClient();
 	}
@@ -167,22 +180,21 @@ public class SFTPushClientTest {
 	public void makeDirectory() throws FileNotFoundException, JSchException, SftpException {
 		Assume.assumeTrue(isUnix());
 
-		final Path expectedDirectory = Paths.get(HOME_DIR.toString(), "couse");
-		final Path expectedTargetFile = Paths.get(expectedDirectory.toString(), TARGET_FILE_NAME);
+		final Path expectedTargetFile = Paths.get(TARGET_DIR_PATH.toString(), TARGET_FILE_NAME);
 
-		this.sftPushClient.createRemoteDirectory(expectedDirectory.toString());
+		assertFalse(Files.exists(TARGET_DIR_PATH));
+		assertFalse(Files.exists(expectedTargetFile));
+		this.sftPushClient.createRemoteDirectory(TARGET_DIR_PATH.toString());
+		assertTrue(Files.exists(TARGET_DIR_PATH));
 		this.sftPushClient.uploadFile(SRC_FILE_PATH.toFile(), expectedTargetFile);
 		assertTrue(Files.exists(expectedTargetFile));
-
 	}
 
 	@Test(expected = SftpException.class)
 	public void makeDirectoryFail() throws FileNotFoundException, JSchException, SftpException {
 		Assume.assumeTrue(isUnix());
 
-		final Path expectedDirectory = Paths.get(HOME_DIR.toString(), "couse");
-		final Path expectedTargetFile = Paths.get(expectedDirectory.toString(), TARGET_FILE_NAME);
-
+		final Path expectedTargetFile = Paths.get(TARGET_DIR_PATH.toString(), TARGET_FILE_NAME);
 		this.sftPushClient.uploadFile(SRC_FILE_PATH.toFile(), expectedTargetFile);
 	}
 

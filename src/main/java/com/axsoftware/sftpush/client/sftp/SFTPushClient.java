@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -394,7 +395,26 @@ public class SFTPushClient {
 		}
 
 		final ChannelSftp sftpChannel = getChannelSftp();
-		sftpChannel.mkdir(directoryPath);
+		final String formattedPath = Paths.get(sftpChannel.pwd(), formatPath(directoryPath)).toString();
+		SftpATTRS attrs = null;
+
+		try {
+			attrs = sftpChannel.stat(formattedPath);
+		} catch (final SftpException exception) {
+			this.logger.fine(exception.getMessage());
+		}
+
+		try {
+			if (attrs == null) {
+				sftpChannel.mkdir(formattedPath);
+			}
+		} catch (final SftpException exception) {
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
+			throw exception;
+		} finally {
+			sftpChannel.exit();
+			disconnectSession();
+		}
 	}
 
 	public void setConnection(final PushConfig connection) {
