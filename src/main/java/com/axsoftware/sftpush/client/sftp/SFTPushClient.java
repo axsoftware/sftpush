@@ -422,8 +422,18 @@ public class SFTPushClient {
 	 * @param source Source file path
 	 * @param target New file path
 	 */
-	public void moveRemoteFile(final Path source, final Path target) {
-
+	public void moveRemoteFile(final Path source, final Path target) throws JSchException, SftpException {
+		final ChannelSftp sftpChannel = getChannelSftp();
+		try {
+			final String pwd = sftpChannel.pwd();
+			sftpChannel.rename(Paths.get(pwd, source.toString()).toString(), Paths.get(pwd, target.toString()).toString());
+		} catch (final SftpException exception) {
+			this.logger.severe(EXCEPTION_ERROR_EXECUTE_COMMAND_SFTP);
+			throw exception;
+		} finally {
+			sftpChannel.exit();
+			disconnectSession();
+		}
 	}
 
 	public void setConnection(final PushConfig connection) {
