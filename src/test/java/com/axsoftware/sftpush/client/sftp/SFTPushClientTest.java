@@ -198,6 +198,22 @@ public class SFTPushClientTest {
 		this.sftPushClient.uploadFile(SRC_FILE_PATH.toFile(), expectedTargetFile);
 	}
 
+	@Test
+	public void moveRemoteFile() throws FileNotFoundException, JSchException, SftpException {
+		Assume.assumeTrue(isUnix());
+
+		final Path expectedTargetFile = Paths.get(TARGET_DIR_PATH.toString(), TARGET_FILE_NAME);
+
+		assertFalse(Files.exists(TARGET_FILE_PATH));
+		this.sftPushClient.uploadFile(SRC_FILE_PATH.toFile(), TARGET_FILE_PATH);
+		assertTrue(Files.exists(TARGET_FILE_PATH));
+		this.sftPushClient.createRemoteDirectory(TARGET_DIR_PATH.toString());
+		assertTrue(Files.exists(TARGET_DIR_PATH));
+		this.sftPushClient.moveRemoteFile(TARGET_FILE_PATH, expectedTargetFile);
+		assertTrue(Files.exists(expectedTargetFile));
+		assertFalse(Files.exists(TARGET_FILE_PATH));
+	}
+
 	/**
 	 * Finish SSH Server
 	 *
