@@ -417,6 +417,15 @@ public class SFTPushClient {
 		}
 	}
 
+	/**
+	 * Move a remote file
+	 * @param source Source file path
+	 * @param target New file path
+	 */
+	public void moveRemoteFile(final Path source, final Path target) {
+
+	}
+
 	public void setConnection(final PushConfig connection) {
 		this.connection = connection;
 	}
